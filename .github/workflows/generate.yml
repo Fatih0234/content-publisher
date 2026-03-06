@@ -1,8 +1,8 @@
 name: Generate Content Drafts
 
 on:
-  schedule:
-    - cron: "0 8 * * *"
+  # schedule:
+  #   - cron: "0 8 * * *"
   workflow_dispatch:
 
 jobs:
@@ -29,4 +29,7 @@ jobs:
           DISCORD_WEBHOOK_PUBLISHED: ${{ secrets.DISCORD_WEBHOOK_PUBLISHED }}
           DISCORD_WEBHOOK_ERRORS: ${{ secrets.DISCORD_WEBHOOK_ERRORS }}
           DISCORD_CHANNEL_DRAFTS_ID: ${{ secrets.DISCORD_CHANNEL_DRAFTS_ID }}
+          YOUTUBE_API_KEY: ${{ secrets.YOUTUBE_API_KEY }}
+          YOUTUBE_CHANNEL_ID: ${{ secrets.YOUTUBE_CHANNEL_ID }}
+          BLOG_RSS_URL: ${{ secrets.BLOG_RSS_URL }}
         run: python -m src.publisher.generate
