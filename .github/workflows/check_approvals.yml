@@ -1,0 +1,30 @@
+name: Check Draft Approvals
+
+on:
+  schedule:
+    - cron: "*/30 * * * *"
+  workflow_dispatch:
+
+jobs:
+  check_approvals:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.13"
+
+      - name: Install dependencies
+        run: pip install uv && uv sync
+
+      - name: Check reactions and update statuses
+        env:
+          SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
+          SUPABASE_SERVICE_ROLE_KEY: ${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}
+          DISCORD_BOT_TOKEN: ${{ secrets.DISCORD_BOT_TOKEN }}
+          DISCORD_WEBHOOK_DRAFTS: ${{ secrets.DISCORD_WEBHOOK_DRAFTS }}
+          DISCORD_WEBHOOK_PUBLISHED: ${{ secrets.DISCORD_WEBHOOK_PUBLISHED }}
+          DISCORD_WEBHOOK_ERRORS: ${{ secrets.DISCORD_WEBHOOK_ERRORS }}
+          DISCORD_CHANNEL_DRAFTS_ID: ${{ secrets.DISCORD_CHANNEL_DRAFTS_ID }}
+        run: python -m src.publisher.check_approvals

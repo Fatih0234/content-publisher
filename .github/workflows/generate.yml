@@ -1,0 +1,32 @@
+name: Generate Content Drafts
+
+on:
+  schedule:
+    - cron: "0 8 * * *"
+  workflow_dispatch:
+
+jobs:
+  generate:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.13"
+
+      - name: Install dependencies
+        run: pip install uv && uv sync
+
+      - name: Generate and post drafts
+        env:
+          SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
+          SUPABASE_SERVICE_ROLE_KEY: ${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}
+          GOOGLE_API_KEY: ${{ secrets.GOOGLE_API_KEY }}
+          LINKEDIN_ACCOUNT_LABEL: ${{ secrets.LINKEDIN_ACCOUNT_LABEL }}
+          DISCORD_BOT_TOKEN: ${{ secrets.DISCORD_BOT_TOKEN }}
+          DISCORD_WEBHOOK_DRAFTS: ${{ secrets.DISCORD_WEBHOOK_DRAFTS }}
+          DISCORD_WEBHOOK_PUBLISHED: ${{ secrets.DISCORD_WEBHOOK_PUBLISHED }}
+          DISCORD_WEBHOOK_ERRORS: ${{ secrets.DISCORD_WEBHOOK_ERRORS }}
+          DISCORD_CHANNEL_DRAFTS_ID: ${{ secrets.DISCORD_CHANNEL_DRAFTS_ID }}
+        run: python -m src.publisher.generate

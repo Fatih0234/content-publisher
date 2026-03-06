@@ -25,7 +25,7 @@ def claim_due_posts(worker_id: str, limit: int) -> list[dict]:
     return result.data or []
 
 
-def _get_account(account_id: str) -> dict:
+def get_account(account_id: str) -> dict:
     result = (
         get_client()
         .table("linkedin_accounts")
@@ -35,10 +35,6 @@ def _get_account(account_id: str) -> dict:
         .execute()
     )
     return result.data
-
-
-def get_account(account_id: str) -> dict:
-    return _get_account(account_id)
 
 
 def mark_published(post_id: str, post_urn: str) -> None:
@@ -97,4 +93,87 @@ def log_attempt(
             "response_snippet": response_snippet,
             "error_message": error_message,
         }
+    ).execute()
+
+
+def get_account_by_label(label: str) -> dict:
+    result = (
+        get_client()
+        .table("linkedin_accounts")
+        .select("*")
+        .eq("label", label)
+        .single()
+        .execute()
+    )
+    return result.data
+
+
+def enqueue_linkedin_post(
+    account_label: str,
+    body: str,
+    publish_at: datetime,
+    discord_message_id: str,
+) -> str:
+    account = get_account_by_label(account_label)
+    result = (
+        get_client()
+        .table("scheduled_posts")
+        .insert(
+            {
+                "account_id": account["id"],
+                "body": body,
+                "publish_at": publish_at.isoformat(),
+                "status": "pending_approval",
+                "discord_message_id": discord_message_id,
+            }
+        )
+        .execute()
+    )
+    return result.data[0]["id"]
+
+
+def get_pending_approval_posts() -> list[dict]:
+    result = (
+        get_client()
+        .table("scheduled_posts")
+        .select("*")
+        .eq("status", "pending_approval")
+        .not_.is_("discord_message_id", "null")
+        .execute()
+    )
+    return result.data or []
+
+
+def approve_post(post_id: str) -> None:
+    get_client().table("scheduled_posts").update(
+        {
+            "status": "queued",
+            "updated_at": datetime.now(timezone.utc).isoformat(),
+        }
+    ).eq("id", post_id).execute()
+
+
+def reject_post(post_id: str) -> None:
+    get_client().table("scheduled_posts").update(
+        {
+            "status": "rejected",
+            "updated_at": datetime.now(timezone.utc).isoformat(),
+        }
+    ).eq("id", post_id).execute()
+
+
+def is_content_processed(url: str) -> bool:
+    result = (
+        get_client()
+        .table("processed_content")
+        .select("id")
+        .eq("source_url", url)
+        .execute()
+    )
+    return bool(result.data)
+
+
+def mark_content_processed(url: str) -> None:
+    get_client().table("processed_content").insert(
+        {"source_url": url}
     ).execute()

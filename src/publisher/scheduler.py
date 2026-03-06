@@ -5,6 +5,7 @@ import logging
 
 from . import config, db
 from .linkedin_client import publish_text, LinkedInError
+from . import discord_client
 
 logging.basicConfig(
     level=logging.INFO,
@@ -41,6 +42,12 @@ def run() -> None:
                 response_snippet=json.dumps(raw)[:500],
             )
             log.info("Post %s published as %s", post_id, post_urn)
+
+            if config.DISCORD_WEBHOOK_PUBLISHED:
+                try:
+                    discord_client.post_published(post_urn, post.get("body", ""))
+                except Exception:
+                    log.warning("Failed to send Discord publish notification for %s", post_id)
 
         except LinkedInError as exc:
             log.error("Post %s failed (HTTP %d): %s", post_id, exc.http_status, exc.message)

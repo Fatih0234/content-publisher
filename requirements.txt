@@ -1,3 +1,5 @@
 supabase
 requests
+requests-oauthlib
 python-dotenv
+google-genai

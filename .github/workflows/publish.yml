@@ -13,11 +13,10 @@ jobs:
 
       - uses: actions/setup-python@v5
         with:
-          python-version: "3.11"
-          cache: pip
+          python-version: "3.13"
 
       - name: Install dependencies
-        run: pip install -r requirements.txt
+        run: pip install uv && uv sync
 
       - name: Run scheduler
         env:
